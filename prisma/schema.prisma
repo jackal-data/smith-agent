@@ -1,0 +1,191 @@
+// Prisma schema for Smith Motors Dealership Agent
+// SQLite for local dev - swap provider to "postgresql" for production
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Users & Roles ───────────────────────────────────────────────
+// role: CUSTOMER | SALESPERSON | MANAGER | ADMIN
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("CUSTOMER")
+  phone     String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chatSessions  ChatSession[]
+  assignments   Assignment[]  @relation("CustomerAssignments")
+  managedBy     Assignment[]  @relation("SalespersonAssignments")
+  appointments  Appointment[]
+  financingApps FinancingApplication[]
+}
+
+// ─── Inventory ───────────────────────────────────────────────────
+// status: AVAILABLE | RESERVED | SOLD | IN_SERVICE
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  vin       String   @unique
+  make      String
+  model     String
+  year      Int
+  trim      String?
+  color     String?
+  msrp      Float
+  salePrice Float?
+  mileage   Int      @default(0)
+  status    String   @default("AVAILABLE")
+  features  String   // JSON array as text
+  imageUrls String   // JSON array as text
+  daysOnLot Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chatMentions ChatVehicleMention[]
+  appointments Appointment[]
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────
+// status: ACTIVE | HANDED_OFF | CLOSED | ARCHIVED
+
+model ChatSession {
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         User     @relation(fields: [customerId], references: [id])
+  status           String   @default("ACTIVE")
+  intentScore      Float    @default(0)
+  summary          String?
+  handoffTriggered Boolean  @default(false)
+  handoffAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  messages         Message[]
+  vehicleMentions  ChatVehicleMention[]
+  assignment       Assignment?
+  appointment      Appointment?
+  conversionEvents ConversionEvent[]
+}
+
+// role: USER | ASSISTANT | TOOL | SYSTEM
+
+model Message {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+  role        String
+  content     String
+  rawContent  String?
+  intentDelta Float?
+  toolName    String?
+  toolInput   String?
+  toolOutput  String?
+  createdAt   DateTime @default(now())
+}
+
+model ChatVehicleMention {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  mentionedAt DateTime @default(now())
+  sentiment   Float?
+}
+
+// ─── Handoff & Assignment ─────────────────────────────────────────
+// status: PENDING | ACKNOWLEDGED | IN_PROGRESS | CLOSED_WON | CLOSED_LOST
+
+model Assignment {
+  id                String   @id @default(cuid())
+  sessionId         String   @unique
+  session           ChatSession @relation(fields: [sessionId], references: [id])
+  customerId        String
+  customer          User     @relation("CustomerAssignments", fields: [customerId], references: [id])
+  salespersonId     String
+  salesperson       User     @relation("SalespersonAssignments", fields: [salespersonId], references: [id])
+  summary           String
+  intentScore       Float
+  recommendedMarkup Float?
+  status            String   @default("PENDING")
+  handoffPayload    String   // JSON
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Appointments ─────────────────────────────────────────────────
+// type: TEST_DRIVE | FINANCING_REVIEW | DELIVERY | SERVICE
+// status: SCHEDULED | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW
+
+model Appointment {
+  id           String   @id @default(cuid())
+  sessionId    String?  @unique
+  session      ChatSession? @relation(fields: [sessionId], references: [id])
+  customerId   String
+  customer     User     @relation(fields: [customerId], references: [id])
+  vehicleId    String?
+  vehicle      Vehicle? @relation(fields: [vehicleId], references: [id])
+  type         String
+  scheduledAt  DateTime
+  durationMins Int      @default(60)
+  notes        String?
+  status       String   @default("SCHEDULED")
+  createdAt    DateTime @default(now())
+}
+
+// ─── Financing ────────────────────────────────────────────────────
+// status: DRAFT | SUBMITTED | UNDER_REVIEW | APPROVED | DECLINED | FUNDED
+
+model FinancingApplication {
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         User     @relation(fields: [customerId], references: [id])
+  vehicleVin       String?
+  annualIncome     Float?
+  creditScoreRange String?
+  downPayment      Float?
+  loanTermMonths   Int?
+  monthlyPayment   Float?
+  apr              Float?
+  lender           String?
+  status           String   @default("DRAFT")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  documents Document[]
+}
+
+// type: DRIVERS_LICENSE | PROOF_OF_INCOME | PROOF_OF_INSURANCE | TRADE_IN_TITLE | PURCHASE_AGREEMENT | FINANCING_CONTRACT
+
+model Document {
+  id            String   @id @default(cuid())
+  applicationId String
+  application   FinancingApplication @relation(fields: [applicationId], references: [id])
+  type          String
+  fileName      String
+  storageKey    String
+  uploadedAt    DateTime @default(now())
+  verified      Boolean  @default(false)
+}
+
+// ─── Metrics / Analytics ─────────────────────────────────────────
+
+model ConversionEvent {
+  id         String   @id @default(cuid())
+  sessionId  String?
+  session    ChatSession? @relation(fields: [sessionId], references: [id])
+  customerId String?
+  eventType  String
+  metadata   String?  // JSON
+  occurredAt DateTime @default(now())
+}
