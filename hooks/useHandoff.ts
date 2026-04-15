@@ -1,15 +1,22 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import type { ChatMessage } from "@/types/chat";
 
 interface HandoffStatus {
   handoffTriggered: boolean;
   salespersonName?: string;
+  salespersonJoined: boolean;
+  salespersonMessages: ChatMessage[];
   assignmentStatus?: string;
 }
 
 export function useHandoff(sessionId?: string) {
-  const [status, setStatus] = useState<HandoffStatus>({ handoffTriggered: false });
+  const [status, setStatus] = useState<HandoffStatus>({
+    handoffTriggered: false,
+    salespersonJoined: false,
+    salespersonMessages: [],
+  });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -20,23 +27,32 @@ export function useHandoff(sessionId?: string) {
         const res = await fetch(`/api/handoff?sessionId=${sessionId}`);
         if (!res.ok) return;
         const data = await res.json();
+
+        const joined = data.assignment?.status === "IN_PROGRESS";
+        const spMessages: ChatMessage[] = (data.salespersonMessages ?? []).map(
+          (m: { id: string; content: string; createdAt: string; senderName?: string }) => ({
+            id: m.id,
+            role: "salesperson" as const,
+            content: m.content,
+            createdAt: m.createdAt,
+            senderName: m.senderName,
+          })
+        );
+
         setStatus({
           handoffTriggered: data.handoffTriggered,
           salespersonName: data.assignment?.salespersonName,
+          salespersonJoined: joined,
+          salespersonMessages: spMessages,
           assignmentStatus: data.assignment?.status,
         });
-
-        // Stop polling once assignment is acknowledged
-        if (data.assignment?.status === "ACKNOWLEDGED" || data.assignment?.status === "IN_PROGRESS") {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-        }
       } catch {
-        // Ignore errors silently
+        // ignore
       }
     };
 
     poll();
-    intervalRef.current = setInterval(poll, 5000);
+    intervalRef.current = setInterval(poll, 4000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);

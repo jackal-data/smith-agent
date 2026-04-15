@@ -129,18 +129,52 @@ Vehicles in DB: ${JSON.stringify(
 
 // ─── Salesperson Assignment ───────────────────────────────────────
 
-/** Load-balance: pick the salesperson with fewest open assignments */
+const EV_MAKES = new Set(["Tesla", "Rivian", "Lucid", "Polestar"]);
+const EV_KEYWORDS = ["Electric", "Hybrid", "e-tron", "iX", "Ioniq", "Bolt", "Leaf", "Lightning", "EV"];
+const TRUCK_MODELS = ["F-150", "F150", "Silverado", "Ram 1500", "Tundra", "Ranger", "Canyon", "Tacoma", "Colorado", "Titan", "Ridgeline", "Maverick"];
+const LUXURY_MAKES = new Set(["Mercedes-Benz", "BMW", "Audi", "Lexus", "Cadillac", "Porsche", "Genesis", "Lincoln", "Infiniti", "Acura", "Volvo", "Jaguar", "Land Rover"]);
+const SPORT_MODELS = ["Mustang", "Camaro", "Challenger", "Charger", "Corvette", "Supra", "86", "BRZ", "WRX", "STI", "GR86"];
+
+function detectCategory(vehiclesOfInterest: HandoffPayload["vehiclesOfInterest"]): string | null {
+  if (!vehiclesOfInterest.length) return null;
+  const top = [...vehiclesOfInterest].sort((a, b) => b.sentimentScore - a.sentimentScore)[0];
+  if (EV_MAKES.has(top.make)) return "EV";
+  if (EV_KEYWORDS.some((kw) => top.model.includes(kw) || top.make.includes(kw))) return "EV";
+  if (TRUCK_MODELS.some((m) => top.model.includes(m))) return "TRUCKS";
+  if (LUXURY_MAKES.has(top.make)) return "LUXURY";
+  if (SPORT_MODELS.some((m) => top.model.includes(m))) return "SPORT";
+  if (top.msrp < 25000) return "BUDGET";
+  return "FAMILY";
+}
+
+/** Assign by specialization match, falling back to load-balancing */
 export async function assignSalesperson(payload: HandoffPayload): Promise<string> {
   const salespersons = await prisma.user.findMany({
-    where:   { role: "SALESPERSON" },
-    include: {
+    where: { role: "SALESPERSON" },
+    select: {
+      id: true,
+      specializations: true,
       managedBy: {
         where: { status: { in: ["PENDING", "ACKNOWLEDGED", "IN_PROGRESS"] } },
+        select: { id: true },
       },
     },
   });
 
   if (salespersons.length === 0) throw new Error("No salespersons available");
+
+  const category = detectCategory(payload.vehiclesOfInterest);
+  if (category) {
+    const specialists = salespersons.filter((sp) => {
+      if (!sp.specializations) return false;
+      try { return (JSON.parse(sp.specializations) as string[]).includes(category); }
+      catch { return false; }
+    });
+    if (specialists.length > 0) {
+      specialists.sort((a, b) => a.managedBy.length - b.managedBy.length);
+      return specialists[0].id;
+    }
+  }
 
   salespersons.sort((a, b) => a.managedBy.length - b.managedBy.length);
   return salespersons[0].id;

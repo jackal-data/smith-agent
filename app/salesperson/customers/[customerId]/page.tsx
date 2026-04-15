@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { PriceRecommendationWidget } from "@/components/salesperson/PriceRecommendationWidget";
+import { LiveChatPanel } from "@/components/salesperson/LiveChatPanel";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
@@ -150,8 +151,16 @@ export default async function CustomerDetailPage({
           </div>
         </div>
 
-        {/* Right: Pricing widget + actions */}
+        {/* Right: Live chat + pricing + actions */}
         <div className="space-y-4">
+          <LiveChatPanel
+            sessionId={assignment.session.id}
+            customerId={assignment.customer.id}
+            customerName={assignment.customer.name}
+            assignmentStatus={assignment.status}
+            salespersonName={session.user.name ?? "Sales Advisor"}
+          />
+
           <PriceRecommendationWidget sessionId={assignment.session.id} />
 
           {/* Status update */}

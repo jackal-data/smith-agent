@@ -23,6 +23,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  specializations String? // JSON array e.g. ["EV","LUXURY","TRUCKS"]
+
   chatSessions  ChatSession[]
   assignments   Assignment[]  @relation("CustomerAssignments")
   managedBy     Assignment[]  @relation("SalespersonAssignments")

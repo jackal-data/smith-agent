@@ -25,12 +25,19 @@ export async function GET(req: NextRequest) {
           salesperson: { select: { name: true } },
         },
       },
+      messages: {
+        where: { role: "SALESPERSON" },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, content: true, createdAt: true, rawContent: true },
+      },
     },
   });
 
   if (!chatSession) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
+
+  const spName = chatSession.assignment?.salesperson.name;
 
   return NextResponse.json({
     handoffTriggered: chatSession.handoffTriggered,
@@ -40,8 +47,14 @@ export async function GET(req: NextRequest) {
       ? {
           id: chatSession.assignment.id,
           status: chatSession.assignment.status,
-          salespersonName: chatSession.assignment.salesperson.name,
+          salespersonName: spName,
         }
       : null,
+    salespersonMessages: chatSession.messages.map((m) => ({
+      id: m.id,
+      content: m.content,
+      createdAt: m.createdAt.toISOString(),
+      senderName: m.rawContent ?? spName,
+    })),
   });
 }

@@ -52,6 +52,30 @@ export async function POST(req: NextRequest) {
 
   const safeMessage = redactPII(message);
 
+  // If session is handed off to a salesperson, save the message but don't call AI
+  if (chatSession.status === "HANDED_OFF") {
+    await prisma.message.create({
+      data: { sessionId: chatSession.id, role: "USER", content: safeMessage },
+    });
+    const enc = new TextEncoder();
+    const handedOffStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          enc.encode(JSON.stringify({ type: "message_received", content: safeMessage }) + "\n")
+        );
+        controller.close();
+      },
+    });
+    return new Response(handedOffStream, {
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        "X-Session-Id": chatSession.id,
+        "Cache-Control": "no-cache",
+      },
+    });
+  }
+
+  // Build message history for Claude
   const messageHistory: Anthropic.MessageParam[] = chatSession.messages
     .filter((m) => m.role === "USER" || m.role === "ASSISTANT")
     .map((m) => ({

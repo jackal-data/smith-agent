@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { AppointmentCalendar } from "@/components/salesperson/AppointmentCalendar";
 import Link from "next/link";
 
 export default async function AppointmentsPage() {
@@ -28,14 +29,31 @@ export default async function AppointmentsPage() {
   const upcoming = appointments.filter((a) => new Date(a.scheduledAt) >= new Date());
   const past = appointments.filter((a) => new Date(a.scheduledAt) < new Date());
 
+  // Serialize for client calendar component
+  const calendarAppointments = appointments.map((a) => ({
+    id: a.id,
+    customerName: a.customer.name,
+    customerEmail: a.customer.email,
+    vehicleLabel: a.vehicle
+      ? `${a.vehicle.year} ${a.vehicle.make} ${a.vehicle.model}`
+      : null,
+    type: a.type,
+    scheduledAt: a.scheduledAt.toISOString(),
+    status: a.status,
+    notes: a.notes,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Link href="/salesperson/dashboard" className="text-sm text-blue-600 hover:underline">
-            ← Dashboard
-          </Link>
-          <h1 className="font-bold text-lg text-gray-900">Appointments</h1>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/salesperson/dashboard" className="text-sm text-blue-600 hover:underline">
+              ← Dashboard
+            </Link>
+            <h1 className="font-bold text-lg text-gray-900">Appointments</h1>
+          </div>
+          <AppointmentCalendar appointments={calendarAppointments} />
         </div>
       </header>
 
