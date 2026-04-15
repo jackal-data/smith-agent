@@ -43,7 +43,7 @@ export default async function AppointmentsPage() {
         <div>
           <h2 className="font-semibold text-gray-900 mb-3">Upcoming ({upcoming.length})</h2>
           {upcoming.length === 0 ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500 text-sm">
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-700 text-sm">
               No upcoming appointments
             </div>
           ) : (
@@ -55,11 +55,11 @@ export default async function AppointmentsPage() {
                       {appt.customer.name || appt.customer.email}
                     </p>
                     {appt.vehicle && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-700">
                         {appt.vehicle.year} {appt.vehicle.make} {appt.vehicle.model}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-600 mt-1">
                       {new Date(appt.scheduledAt).toLocaleDateString("en-US", {
                         weekday: "long",
                         month: "long",
@@ -68,7 +68,7 @@ export default async function AppointmentsPage() {
                         minute: "2-digit",
                       })}
                     </p>
-                    {appt.notes && <p className="text-xs text-gray-500 mt-1 italic">{appt.notes}</p>}
+                    {appt.notes && <p className="text-xs text-gray-700 mt-1 italic">{appt.notes}</p>}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
@@ -90,17 +90,17 @@ export default async function AppointmentsPage() {
 
         {past.length > 0 && (
           <div>
-            <h2 className="font-semibold text-gray-500 mb-3 text-sm">Past ({past.length})</h2>
+            <h2 className="font-semibold text-gray-700 mb-3 text-sm">Past ({past.length})</h2>
             <div className="space-y-2">
               {past.slice(0, 10).map((appt) => (
                 <div key={appt.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center justify-between opacity-70">
                   <div>
                     <p className="text-sm text-gray-700">{appt.customer.name || appt.customer.email}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-600">
                       {new Date(appt.scheduledAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
                     {appt.status}
                   </span>
                 </div>

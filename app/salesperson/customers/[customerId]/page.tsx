@@ -58,12 +58,12 @@ export default async function CustomerDetailPage({
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <h2 className="font-semibold text-sm text-gray-900 mb-3">Customer Info</h2>
             <div className="space-y-1.5 text-sm">
-              <p><span className="text-gray-500 w-16 inline-block">Email:</span> {assignment.customer.email}</p>
+              <p><span className="text-gray-700 w-16 inline-block">Email:</span> {assignment.customer.email}</p>
               {assignment.customer.phone && (
-                <p><span className="text-gray-500 w-16 inline-block">Phone:</span> {assignment.customer.phone}</p>
+                <p><span className="text-gray-700 w-16 inline-block">Phone:</span> {assignment.customer.phone}</p>
               )}
               <p>
-                <span className="text-gray-500 w-16 inline-block">Intent:</span>
+                <span className="text-gray-700 w-16 inline-block">Intent:</span>
                 <span className="font-semibold text-blue-700">{Math.round(assignment.intentScore * 100)}%</span>
               </p>
             </div>
@@ -76,7 +76,7 @@ export default async function CustomerDetailPage({
 
             {handoffPayload.urgencySignals?.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Urgency signals</p>
+                <p className="text-xs font-medium text-gray-700 mb-1.5">Urgency signals</p>
                 <div className="flex flex-wrap gap-1.5">
                   {handoffPayload.urgencySignals.map((s: string, i: number) => (
                     <span key={i} className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
@@ -87,7 +87,7 @@ export default async function CustomerDetailPage({
               </div>
             )}
 
-            <div className="mt-3 flex gap-4 text-xs text-gray-500">
+            <div className="mt-3 flex gap-4 text-xs text-gray-700">
               <span>{handoffPayload.financingMentioned ? "💰 Financing mentioned" : ""}</span>
               <span>{handoffPayload.tradeInMentioned ? "🔄 Trade-in mentioned" : ""}</span>
             </div>
@@ -104,7 +104,7 @@ export default async function CustomerDetailPage({
                       <p className="text-sm font-medium text-gray-900">
                         {vm.vehicle.year} {vm.vehicle.make} {vm.vehicle.model} {vm.vehicle.trim}
                       </p>
-                      <p className="text-xs text-gray-500">VIN: {vm.vehicle.vin}</p>
+                      <p className="text-xs text-gray-700">VIN: {vm.vehicle.vin}</p>
                     </div>
                     <p className="text-sm font-semibold text-gray-900">
                       ${vm.vehicle.msrp.toLocaleString()}
@@ -131,7 +131,7 @@ export default async function CustomerDetailPage({
                     }`}
                   >
                     <p className="leading-relaxed">{m.content}</p>
-                    <p className={`mt-1 text-[10px] ${m.role === "USER" ? "text-blue-200" : "text-gray-400"}`}>
+                    <p className={`mt-1 text-[10px] ${m.role === "USER" ? "text-blue-200" : "text-gray-600"}`}>
                       {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true })}
                     </p>
                   </div>

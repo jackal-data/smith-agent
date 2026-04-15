@@ -40,7 +40,7 @@ export default async function FinancingPage() {
 
         {!latestApp && (
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-            <p className="text-gray-500 text-sm mb-3">
+            <p className="text-gray-700 text-sm mb-3">
               Ready to apply? Start a financing application to upload your documents.
             </p>
             <button

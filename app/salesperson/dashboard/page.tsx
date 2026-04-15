@@ -59,7 +59,7 @@ export default async function SalespersonDashboard() {
           </div>
           <div>
             <p className="font-semibold text-sm text-gray-900">Smith Motors</p>
-            <p className="text-xs text-gray-500">Sales Dashboard</p>
+            <p className="text-xs text-gray-700">Sales Dashboard</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -75,11 +75,11 @@ export default async function SalespersonDashboard() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{assignments.length}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Active Customers</p>
+            <p className="text-xs text-gray-700 mt-0.5">Active Customers</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{upcomingAppointments.length}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Upcoming Appts</p>
+            <p className="text-xs text-gray-700 mt-0.5">Upcoming Appts</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">
@@ -89,7 +89,7 @@ export default async function SalespersonDashboard() {
                   )
                 : 0}%
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">Avg Intent Score</p>
+            <p className="text-xs text-gray-700 mt-0.5">Avg Intent Score</p>
           </div>
         </div>
 
@@ -98,10 +98,10 @@ export default async function SalespersonDashboard() {
           <div className="lg:col-span-2">
             <h2 className="font-semibold text-gray-900 mb-3">Your Customers</h2>
             {assignments.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-700">
                 <p className="text-3xl mb-2">📭</p>
                 <p className="text-sm">No active customers yet.</p>
-                <p className="text-xs text-gray-400 mt-1">New customers will appear here after handoff.</p>
+                <p className="text-xs text-gray-600 mt-1">New customers will appear here after handoff.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -127,7 +127,7 @@ export default async function SalespersonDashboard() {
           <div>
             <h2 className="font-semibold text-gray-900 mb-3">Upcoming Appointments</h2>
             {upcomingAppointments.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-5 text-center text-gray-500 text-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-5 text-center text-gray-700 text-sm">
                 No upcoming appointments
               </div>
             ) : (
@@ -143,11 +143,11 @@ export default async function SalespersonDashboard() {
                       </span>
                     </div>
                     {appt.vehicle && (
-                      <p className="text-xs text-gray-500 mb-1">
+                      <p className="text-xs text-gray-700 mb-1">
                         {appt.vehicle.year} {appt.vehicle.make} {appt.vehicle.model}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-600">
                       {new Date(appt.scheduledAt).toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",

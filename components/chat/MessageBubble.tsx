@@ -35,7 +35,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </span>
           )}
         </div>
-        <span className="text-xs text-gray-400 mt-1">
+        <span className="text-xs text-gray-600 mt-1">
           {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
         </span>
       </div>

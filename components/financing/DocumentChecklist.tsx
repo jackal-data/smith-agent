@@ -43,7 +43,7 @@ export function DocumentChecklist({ applicationId, uploadedDocuments = [] }: Doc
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <h2 className="font-semibold text-gray-900 mb-1">Required Documents</h2>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs text-gray-700 mb-4">
         Upload these documents to speed up your financing approval.
       </p>
 
@@ -60,13 +60,13 @@ export function DocumentChecklist({ applicationId, uploadedDocuments = [] }: Doc
                     ? "bg-green-100 text-green-600"
                     : uploaded
                     ? "bg-blue-100 text-blue-600"
-                    : "bg-gray-100 text-gray-400"
+                    : "bg-gray-100 text-gray-600"
                 }`}>
                   {uploaded?.verified ? "✓" : uploaded ? "↑" : "○"}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">{doc.label}</p>
-                  <p className="text-xs text-gray-400">{doc.description}</p>
+                  <p className="text-xs text-gray-600">{doc.description}</p>
                   {uploaded && !uploaded.verified && (
                     <p className="text-xs text-blue-500">Uploaded: {uploaded.fileName}</p>
                   )}
@@ -86,7 +86,7 @@ export function DocumentChecklist({ applicationId, uploadedDocuments = [] }: Doc
                   />
                   <span className={`text-xs px-3 py-1.5 rounded-lg border font-medium ${
                     isUploading
-                      ? "bg-gray-100 text-gray-400 cursor-wait"
+                      ? "bg-gray-100 text-gray-600 cursor-wait"
                       : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
                   }`}>
                     {isUploading ? "Uploading..." : "Upload"}

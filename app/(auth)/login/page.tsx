@@ -47,7 +47,7 @@ export default function LoginPage() {
             SM
           </div>
           <h1 className="font-bold text-xl text-gray-900">Welcome back</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to Smith Motors</p>
+          <p className="text-sm text-gray-700 mt-1">Sign in to Smith Motors</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,7 +85,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-xs text-center text-gray-500 mt-4">
+        <p className="text-xs text-center text-gray-700 mt-4">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-blue-600 hover:underline">
             Create one

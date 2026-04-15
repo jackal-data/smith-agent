@@ -131,7 +131,7 @@ export function ChatWindow() {
             )}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-1.5 text-center">
+        <p className="text-xs text-gray-600 mt-1.5 text-center">
           Smith Motors • Powered by AI
         </p>
       </div>

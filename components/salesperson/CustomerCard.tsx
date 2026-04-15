@@ -32,7 +32,7 @@ function IntentBar({ score }: { score: number }) {
       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-medium text-gray-500 w-8 text-right">{pct}%</span>
+      <span className="text-xs font-medium text-gray-700 w-8 text-right">{pct}%</span>
     </div>
   );
 }
@@ -55,7 +55,7 @@ export function CustomerCard({
             <p className="font-semibold text-sm text-gray-900">
               {customerName || customerEmail}
             </p>
-            <p className="text-xs text-gray-500">{customerEmail}</p>
+            <p className="text-xs text-gray-700">{customerEmail}</p>
           </div>
           <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[assignmentStatus])}>
             {assignmentStatus.replace(/_/g, " ")}
@@ -63,7 +63,7 @@ export function CustomerCard({
         </div>
 
         <div className="mb-3">
-          <p className="text-xs text-gray-400 mb-1">Buying intent</p>
+          <p className="text-xs text-gray-600 mb-1">Buying intent</p>
           <IntentBar score={intentScore} />
         </div>
 
@@ -77,7 +77,7 @@ export function CustomerCard({
 
         <p className="text-xs text-gray-600 line-clamp-2 mb-2">{summary}</p>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-600">
           Last activity {formatDistanceToNow(new Date(lastActivity), { addSuffix: true })}
         </p>
       </div>

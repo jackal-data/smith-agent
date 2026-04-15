@@ -32,7 +32,7 @@ export function PriceRecommendationWidget({ sessionId }: PriceRecommendationWidg
 
   if (error || !rec) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-500">
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700">
         {error || "No recommendation available"}
       </div>
     );
@@ -61,7 +61,7 @@ export function PriceRecommendationWidget({ sessionId }: PriceRecommendationWidg
       <p className="text-xs text-gray-600 mb-3">{rec.rationale}</p>
 
       <div className="mb-3">
-        <p className="text-xs font-medium text-gray-500 mb-1.5">Talking points</p>
+        <p className="text-xs font-medium text-gray-700 mb-1.5">Talking points</p>
         <ul className="space-y-1">
           {rec.talkingPoints.map((point, i) => (
             <li key={i} className="text-xs text-gray-700 flex gap-2">
@@ -73,7 +73,7 @@ export function PriceRecommendationWidget({ sessionId }: PriceRecommendationWidg
       </div>
 
       <div className="border-t pt-2">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-700">
           Negotiation floor:{" "}
           <span className="font-semibold text-gray-700">
             ${rec.negotiationFloor.toLocaleString()}
