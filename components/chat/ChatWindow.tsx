@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useChat } from "@/hooks/useChat";
 import { useHandoff } from "@/hooks/useHandoff";
 import { MessageBubble } from "./MessageBubble";
@@ -17,7 +18,8 @@ const SUGGESTED_QUESTIONS = [
 export function ChatWindow() {
   const { messages, sessionId, isLoading, isHandedOff, handoffMessage, sendMessage } = useChat();
   const { salespersonName } = useHandoff(sessionId);
-  const [input, setInput] = useState("");
+  const searchParams = useSearchParams();
+  const [input, setInput] = useState(() => searchParams.get("prefill") ?? "");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
