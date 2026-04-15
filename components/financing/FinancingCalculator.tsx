@@ -33,7 +33,7 @@ export function FinancingCalculator() {
 
       <div className="space-y-3 mb-4">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Vehicle Price ($)</label>
+          <label className="block text-xs text-gray-700 mb-1">Vehicle Price ($)</label>
           <input
             type="number"
             value={vehiclePrice}
@@ -43,7 +43,7 @@ export function FinancingCalculator() {
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Down Payment ($)</label>
+          <label className="block text-xs text-gray-700 mb-1">Down Payment ($)</label>
           <input
             type="number"
             value={downPayment}
@@ -53,7 +53,7 @@ export function FinancingCalculator() {
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Credit Tier</label>
+          <label className="block text-xs text-gray-700 mb-1">Credit Tier</label>
           <select
             value={creditTier}
             onChange={(e) => setCreditTier(e.target.value)}
@@ -84,7 +84,7 @@ export function FinancingCalculator() {
                   ${s.monthlyPayment.toLocaleString()}/mo
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-gray-700">
                 <span>{s.apr}% APR</span>
                 <span>Total: ${s.totalCost.toLocaleString()}</span>
               </div>

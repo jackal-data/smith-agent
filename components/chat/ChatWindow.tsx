@@ -62,7 +62,7 @@ export function ChatWindow() {
             </div>
             <div>
               <h2 className="font-semibold text-gray-900">Welcome to Smith Motors</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 I can help you find your perfect vehicle, explore financing options, and more.
               </p>
             </div>
