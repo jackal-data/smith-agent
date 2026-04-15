@@ -15,6 +15,10 @@
  *   DRY_RUN=true     Print conversations to stdout without writing to DB
  */
 
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
+
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
