@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
@@ -8,8 +9,8 @@ const registerSchema = z.object({
   password: z.string().min(8),
   name: z.string().optional(),
   role: z.enum(["CUSTOMER", "SALESPERSON"]).default("CUSTOMER"),
-  // Simple registration key for salesperson accounts (in production, use invite system)
   registrationKey: z.string().optional(),
+  marketingOptIn: z.boolean().optional().default(false),
 });
 
 const SALESPERSON_KEY = process.env.SALESPERSON_REGISTRATION_KEY || "smith-sales-2024";
@@ -32,12 +33,18 @@ export async function POST(req: NextRequest) {
 
   const hashedPassword = await bcrypt.hash(parsed.data.password, 12);
 
+  const marketingOptIn = parsed.data.role === "CUSTOMER" && parsed.data.marketingOptIn;
+
   const user = await prisma.user.create({
     data: {
       email: parsed.data.email,
       name: parsed.data.name,
       password: hashedPassword,
       role: parsed.data.role,
+      marketingOptIn,
+      ...(marketingOptIn && {
+        unsubscribeToken: crypto.randomBytes(32).toString("hex"),
+      }),
     },
     select: { id: true, email: true, name: true, role: true },
   });

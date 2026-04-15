@@ -23,7 +23,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  specializations String? // JSON array e.g. ["EV","LUXURY","TRUCKS"]
+  specializations  String? // JSON array e.g. ["EV","LUXURY","TRUCKS"]
+  marketingOptIn   Boolean  @default(false)
+  unsubscribeToken String?  @unique
 
   chatSessions  ChatSession[]
   assignments   Assignment[]  @relation("CustomerAssignments")

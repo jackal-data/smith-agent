@@ -2,12 +2,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import prisma from "@/lib/prisma";
+import { MarketingOptInBanner } from "@/components/customer/MarketingOptInBanner";
 
 export default async function CustomerDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
   const firstName = session.user.name?.split(" ")[0] ?? "there";
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { marketingOptIn: true },
+  });
+  const showOptInBanner = !dbUser?.marketingOptIn;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,6 +49,8 @@ export default async function CustomerDashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">Welcome back, {firstName}</h1>
           <p className="text-gray-700 mt-1 text-sm">What would you like to do today?</p>
         </div>
+
+        {showOptInBanner && <MarketingOptInBanner />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 

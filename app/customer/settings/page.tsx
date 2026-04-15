@@ -14,6 +14,8 @@ export default function CustomerSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [marketingLoading, setMarketingLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -22,6 +24,13 @@ export default function CustomerSettingsPage() {
       setPhone((session.user as { phone?: string }).phone ?? "");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/customer/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d.user) setMarketingOptIn(d.user.marketingOptIn); });
+  }, [status]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +57,17 @@ export default function CustomerSettingsPage() {
   };
 
   const handleLogout = () => signOut({ callbackUrl: "/" });
+
+  const handleMarketingToggle = async (checked: boolean) => {
+    setMarketingLoading(true);
+    setMarketingOptIn(checked);
+    await fetch("/api/marketing/opt-in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ optIn: checked }),
+    });
+    setMarketingLoading(false);
+  };
 
   if (status === "loading") {
     return (
@@ -157,6 +177,39 @@ export default function CustomerSettingsPage() {
               )}
             </div>
           </form>
+        </div>
+
+        {/* Marketing section */}
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Notifications &amp; Deals</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Control what emails you receive from Smith Motors</p>
+          </div>
+          <div className="px-6 py-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Deal alerts &amp; price drops</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Get notified when vehicles you might love go on sale
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={marketingOptIn}
+                disabled={marketingLoading}
+                onClick={() => handleMarketingToggle(!marketingOptIn)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+                  marketingOptIn ? "bg-blue-600" : "bg-gray-200"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                    marketingOptIn ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Account section */}

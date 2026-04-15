@@ -12,6 +12,7 @@ export default function RegisterPage() {
     name: "",
     role: "CUSTOMER" as "CUSTOMER" | "SALESPERSON",
     registrationKey: "",
+    marketingOptIn: true,
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -120,6 +121,20 @@ export default function RegisterPage() {
                 placeholder="Provided by your manager"
               />
             </div>
+          )}
+
+          {form.role === "CUSTOMER" && (
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.marketingOptIn}
+                onChange={(e) => setForm({ ...form, marketingOptIn: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="text-xs text-gray-600">
+                Sign me up for deals &amp; price drop alerts from Smith Motors
+              </span>
+            </label>
           )}
 
           {error && <p className="text-xs text-red-600">{error}</p>}

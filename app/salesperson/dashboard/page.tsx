@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { CustomerCard } from "@/components/salesperson/CustomerCard";
 import { WeekStrip } from "@/components/salesperson/WeekStrip";
 import { SettingsDropdown } from "@/components/salesperson/SettingsDropdown";
+import { MetricsPreviewCard } from "@/components/salesperson/MetricsPreviewCard";
+import { DealAlertModal } from "@/components/salesperson/DealAlertModal";
 import Link from "next/link";
 
 export default async function SalespersonDashboard() {
@@ -83,6 +85,7 @@ export default async function SalespersonDashboard() {
           <Link href="/salesperson/appointments" className="text-sm text-blue-600 hover:underline">
             Appointments
           </Link>
+          {["MANAGER", "ADMIN"].includes(session.user.role) && <DealAlertModal />}
           <SettingsDropdown
             name={session.user.name ?? null}
             email={session.user.email!}
@@ -154,6 +157,7 @@ export default async function SalespersonDashboard() {
               </Link>
             </div>
             <WeekStrip appointments={serializedAppointments} />
+            <MetricsPreviewCard />
           </div>
         </div>
       </div>
