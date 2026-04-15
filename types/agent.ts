@@ -1,3 +1,15 @@
+export type AgentType = "SCOUT" | "CONCIERGE" | "FINANCE";
+
+export interface AgentStreamEvent {
+  type: "text" | "tool_result" | "handoff_triggered" | "agent_transition" | "done" | "error";
+  content?: string;
+  toolName?: string;
+  toolResult?: unknown;
+  intentScore?: number;
+  fromAgent?: AgentType;
+  toAgent?: AgentType;
+}
+
 export interface HandoffPayload {
   sessionId: string;
   customerId: string;

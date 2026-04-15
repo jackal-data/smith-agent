@@ -65,6 +65,7 @@ model ChatSession {
   status           String   @default("ACTIVE")
   intentScore      Float    @default(0)
   summary          String?
+  currentAgent     String   @default("SCOUT")
   handoffTriggered Boolean  @default(false)
   handoffAt        DateTime?
   createdAt        DateTime @default(now())
