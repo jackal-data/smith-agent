@@ -5,46 +5,47 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-type View = "pick" | "customer" | "salesperson";
-
 export function LandingPage() {
-  const [view, setView] = useState<View>("pick");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [custEmail, setCustEmail] = useState("");
+  const [custPassword, setCustPassword] = useState("");
+  const [empEmail, setEmpEmail] = useState("");
+  const [empPassword, setEmpPassword] = useState("");
+  const [custError, setCustError] = useState("");
+  const [empError, setEmpError] = useState("");
+  const [loading, setLoading] = useState<"customer" | "employee" | null>(null);
+  const [empOpen, setEmpOpen] = useState(false);
   const router = useRouter();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleCustomerSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    const result = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
-    if (result?.error) {
-      setError("Invalid email or password");
-      return;
-    }
+    setCustError("");
+    setLoading("customer");
+    const result = await signIn("credentials", { email: custEmail, password: custPassword, redirect: false });
+    setLoading(null);
+    if (result?.error) { setCustError("Invalid email or password"); return; }
+    router.push("/customer/chat");
+  };
+
+  const handleEmployeeSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmpError("");
+    setLoading("employee");
+    const result = await signIn("credentials", { email: empEmail, password: empPassword, redirect: false });
+    setLoading(null);
+    if (result?.error) { setEmpError("Invalid email or password"); return; }
     const res = await fetch("/api/auth/session");
     const session = await res.json();
     if (["SALESPERSON", "MANAGER", "ADMIN"].includes(session?.user?.role)) {
       router.push("/salesperson/dashboard");
     } else {
-      router.push("/customer/chat");
+      setEmpError("This portal is for employees only.");
     }
-  };
-
-  const reset = () => {
-    setView("pick");
-    setEmail("");
-    setPassword("");
-    setError("");
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -54,592 +55,560 @@ export function LandingPage() {
           height: 100vh;
           font-family: 'Barlow', sans-serif;
           background: #0B1F36;
+          overflow: hidden;
         }
 
-        /* ── Top bar ── */
-        .sm-topbar {
+        /* ── Main area ── */
+        .sm-main {
+          flex: 1;
+          position: relative;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-between;
-          padding: 0 40px;
-          height: 56px;
-          background: #0B1F36;
-          border-bottom: 1px solid rgba(255,255,255,0.08);
-          flex-shrink: 0;
-          z-index: 20;
+          overflow: hidden;
+          min-height: 0;
         }
-        .sm-topbar-brand {
+
+        /* ── Car silhouette ── */
+        .sm-car-bg {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -54%);
+          width: min(860px, 92vw);
+          pointer-events: none;
+          user-select: none;
+          opacity: 1;
+        }
+
+        /* ── Brand ── */
+        .sm-brand {
+          position: relative;
+          z-index: 2;
           display: flex;
+          flex-direction: column;
           align-items: center;
+          padding-top: 40px;
+          padding-bottom: 28px;
           gap: 10px;
         }
-        .sm-topbar-diamond {
-          width: 18px;
-          height: 18px;
+        .sm-brand-mark {
+          width: 36px;
+          height: 36px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sm-brand-mark-outer {
+          width: 36px;
+          height: 36px;
+          border: 1.5px solid rgba(255,255,255,0.3);
+          transform: rotate(45deg);
+          position: absolute;
+        }
+        .sm-brand-mark-inner {
+          width: 14px;
+          height: 14px;
           background: #1B6BCC;
           transform: rotate(45deg);
-          flex-shrink: 0;
         }
-        .sm-topbar-name {
+        .sm-brand-name {
           font-family: 'Barlow Condensed', sans-serif;
           font-weight: 700;
-          font-size: 15px;
-          letter-spacing: 0.18em;
+          font-size: 22px;
+          letter-spacing: 0.28em;
           text-transform: uppercase;
           color: #FFFFFF;
         }
-        .sm-topbar-right {
+        .sm-brand-sub {
           font-size: 11px;
+          font-weight: 400;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
           color: rgba(255,255,255,0.35);
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          font-weight: 400;
+          margin-top: -4px;
         }
 
-        /* ── Main split ── */
-        .sm-split {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
-        }
-
-        /* ── Panels ── */
-        .sm-panel {
+        /* ── Customer card ── */
+        .sm-card-wrap {
           position: relative;
+          z-index: 2;
+          width: 100%;
           display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          transition: flex 0.65s cubic-bezier(0.77, 0, 0.175, 1);
-        }
-        .sm-panel-customer { flex: 1; background: #FFFFFF; }
-        .sm-panel-employee { flex: 1; background: #0B1F36; }
-
-        /* Customer selected */
-        .sm-root.view-customer .sm-panel-customer { flex: 1.6; }
-        .sm-root.view-customer .sm-panel-employee { flex: 0.001; pointer-events: none; }
-        .sm-root.view-customer .sm-panel-employee .sm-panel-inner { opacity: 0; }
-
-        /* Salesperson selected */
-        .sm-root.view-salesperson .sm-panel-employee { flex: 1.6; }
-        .sm-root.view-salesperson .sm-panel-customer { flex: 0.001; pointer-events: none; }
-        .sm-root.view-salesperson .sm-panel-customer .sm-panel-inner { opacity: 0; }
-
-        .sm-panel-inner {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          transition: opacity 0.3s ease;
-        }
-
-        /* ── Divider ── */
-        .sm-divider {
-          width: 1px;
-          flex-shrink: 0;
-          background: #D0D9E3;
-          z-index: 10;
-          transition: opacity 0.4s ease;
-        }
-        .sm-root.view-customer .sm-divider,
-        .sm-root.view-salesperson .sm-divider { opacity: 0; }
-
-        /* ── Panel body ── */
-        .sm-panel-body {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
           justify-content: center;
-          padding: 0 64px 56px;
+          padding: 0 16px;
+          flex: 1;
+          align-items: flex-start;
         }
-
-        /* ── Selection card ── */
-        .sm-select {
-          cursor: pointer;
+        .sm-card {
+          background: #FFFFFF;
+          width: 100%;
           max-width: 400px;
+          padding: 36px 40px 32px;
+          box-shadow: 0 24px 60px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.2);
         }
-
-        .sm-role-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.18em;
+        .sm-card-eyebrow {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.22em;
           text-transform: uppercase;
-          margin-bottom: 20px;
-          padding: 5px 12px;
-        }
-        .sm-role-tag-customer {
-          background: #EBF2FB;
           color: #1B6BCC;
-          border: 1px solid #C2D8F3;
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
         }
-        .sm-role-tag-employee {
-          background: rgba(27,107,204,0.15);
-          color: #7DB3EA;
-          border: 1px solid rgba(27,107,204,0.3);
-        }
-
-        .sm-role-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
+        .sm-card-eyebrow::before {
+          content: '';
+          display: block;
+          width: 16px;
+          height: 2px;
+          background: #1B6BCC;
           flex-shrink: 0;
         }
-        .sm-role-dot-customer { background: #1B6BCC; }
-        .sm-role-dot-employee { background: #7DB3EA; }
-
-        .sm-select-heading {
+        .sm-card-title {
           font-family: 'Barlow Condensed', sans-serif;
           font-weight: 700;
-          font-size: clamp(44px, 5vw, 68px);
-          line-height: 0.95;
-          letter-spacing: -0.01em;
+          font-size: 28px;
           text-transform: uppercase;
-          margin-bottom: 20px;
+          letter-spacing: 0.04em;
+          color: #0B1F36;
+          margin-bottom: 24px;
+          line-height: 1;
         }
-        .sm-select-heading-dark { color: #0B1F36; }
-        .sm-select-heading-light { color: #FFFFFF; }
-
-        .sm-select-desc {
-          font-size: 14px;
-          font-weight: 400;
-          line-height: 1.65;
-          margin-bottom: 36px;
-          max-width: 260px;
-        }
-        .sm-select-desc-dark { color: #5B738A; }
-        .sm-select-desc-light { color: rgba(255,255,255,0.5); }
-
-        .sm-btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          background: #1B6BCC;
-          color: #FFFFFF;
-          border: none;
-          padding: 13px 24px;
-          font-family: 'Barlow', sans-serif;
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        .sm-btn-primary:hover { background: #155BA8; }
-
-        .sm-btn-outline {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          background: transparent;
-          color: #FFFFFF;
-          border: 1.5px solid rgba(255,255,255,0.35);
-          padding: 13px 24px;
-          font-family: 'Barlow', sans-serif;
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: border-color 0.2s, background 0.2s;
-        }
-        .sm-btn-outline:hover {
-          border-color: rgba(255,255,255,0.7);
-          background: rgba(255,255,255,0.06);
-        }
-
-        /* ── Feature list ── */
-        .sm-features {
-          margin-top: 28px;
+        .sm-field {
           display: flex;
           flex-direction: column;
-          gap: 9px;
-        }
-        .sm-feature-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 13px;
-          font-weight: 400;
-        }
-        .sm-feature-item-dark  { color: #5B738A; }
-        .sm-feature-item-light { color: rgba(255,255,255,0.45); }
-        .sm-feature-check {
-          width: 16px;
-          height: 16px;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        /* ── Form state ── */
-        .sm-form-wrap {
-          max-width: 340px;
-          animation: smSlideIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-        }
-
-        @keyframes smSlideIn {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .sm-back {
-          display: inline-flex;
-          align-items: center;
           gap: 6px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-family: 'Barlow', sans-serif;
-          font-size: 12px;
+          margin-bottom: 14px;
+        }
+        .sm-label {
+          font-size: 11px;
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          padding: 0;
-          margin-bottom: 44px;
-          transition: opacity 0.2s;
+          color: #5B738A;
         }
-        .sm-back:hover { opacity: 0.75; }
-        .sm-back-dark  { color: #5B738A; }
-        .sm-back-light { color: rgba(255,255,255,0.45); }
-
-        .sm-form-role {
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          margin-bottom: 8px;
-        }
-        .sm-form-role-blue { color: #1B6BCC; }
-        .sm-form-role-sky  { color: #7DB3EA; }
-
-        .sm-form-title {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-weight: 700;
-          font-size: 34px;
-          text-transform: uppercase;
-          letter-spacing: 0.02em;
-          margin-bottom: 32px;
-          line-height: 1;
-        }
-        .sm-form-title-dark  { color: #0B1F36; }
-        .sm-form-title-light { color: #FFFFFF; }
-
-        .sm-field { display: flex; flex-direction: column; gap: 6px; }
-        .sm-field-label {
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-        }
-        .sm-field-label-dark  { color: #5B738A; }
-        .sm-field-label-light { color: rgba(255,255,255,0.4); }
-
-        .sm-input-dark, .sm-input-light {
+        .sm-input {
           font-family: 'Barlow', sans-serif;
           font-size: 14px;
           font-weight: 400;
-          padding: 11px 14px;
-          outline: none;
-          width: 100%;
-          transition: border-color 0.2s;
-        }
-        .sm-input-dark {
+          padding: 10px 13px;
           background: #F4F7FA;
           border: 1.5px solid #D0D9E3;
           color: #0B1F36;
+          outline: none;
+          transition: border-color 0.2s, background 0.2s;
+          width: 100%;
         }
-        .sm-input-dark::placeholder { color: #9EB3C5; }
-        .sm-input-dark:focus {
+        .sm-input::placeholder { color: #9EB3C5; }
+        .sm-input:focus {
           border-color: #1B6BCC;
           background: #FFFFFF;
         }
-        .sm-input-light {
-          background: rgba(255,255,255,0.06);
-          border: 1.5px solid rgba(255,255,255,0.15);
+        .sm-error-box {
+          font-size: 12px;
+          font-weight: 500;
+          color: #B91C1C;
+          background: #FEF2F2;
+          border-left: 2px solid #B91C1C;
+          padding: 8px 12px;
+          margin-bottom: 10px;
+          letter-spacing: 0.03em;
+        }
+        .sm-submit {
+          width: 100%;
+          background: #1B6BCC;
           color: #FFFFFF;
-        }
-        .sm-input-light::placeholder { color: rgba(255,255,255,0.25); }
-        .sm-input-light:focus {
-          border-color: rgba(255,255,255,0.4);
-          background: rgba(255,255,255,0.09);
-        }
-
-        .sm-submit-dark, .sm-submit-light {
           border: none;
           padding: 13px 20px;
           font-family: 'Barlow', sans-serif;
           font-size: 13px;
           font-weight: 700;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           cursor: pointer;
-          width: 100%;
-          margin-top: 6px;
-          transition: opacity 0.2s, background 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
+          margin-top: 6px;
+          transition: background 0.2s;
         }
-        .sm-submit-dark { background: #1B6BCC; color: #FFFFFF; }
-        .sm-submit-dark:hover { background: #155BA8; }
-        .sm-submit-light { background: #FFFFFF; color: #0B1F36; }
-        .sm-submit-light:hover { background: #EBF2FB; }
-        .sm-submit-dark:disabled,
-        .sm-submit-light:disabled { opacity: 0.45; cursor: not-allowed; }
-
-        .sm-error {
-          font-size: 12px;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          color: #D9000D;
-          padding: 8px 12px;
-          background: rgba(217,0,13,0.06);
-          border-left: 2px solid #D9000D;
-        }
-        .sm-error-light { color: #FCA5A5; background: rgba(252,165,165,0.08); border-color: #FCA5A5; }
-
+        .sm-submit:hover:not(:disabled) { background: #155BA8; }
+        .sm-submit:disabled { opacity: 0.45; cursor: not-allowed; }
         .sm-register {
-          font-size: 13px;
-          margin-top: 20px;
+          font-size: 12px;
+          color: #7B9AB2;
+          margin-top: 16px;
+          text-align: center;
           font-weight: 400;
         }
-        .sm-register-dark  { color: #7B9AB2; }
-        .sm-register-light { color: rgba(255,255,255,0.35); }
-        .sm-register a { font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
-        .sm-register-dark a  { color: #1B6BCC; }
-        .sm-register-light a { color: rgba(255,255,255,0.65); }
-        .sm-register a:hover { opacity: 0.75; }
+        .sm-register a {
+          color: #1B6BCC;
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .sm-register a:hover { text-decoration: underline; }
 
-        /* ── Panel footer strip ── */
-        .sm-panel-footer {
-          padding: 16px 64px;
+        /* ── Employee dock ── */
+        .sm-dock {
+          flex-shrink: 0;
+          background: #060F1C;
+          border-top: 1px solid rgba(255,255,255,0.07);
+          z-index: 10;
+          overflow: hidden;
+          transition: max-height 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+          max-height: 58px;
+        }
+        .sm-dock.open { max-height: 320px; }
+
+        .sm-dock-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          padding: 0 40px;
+          height: 58px;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.15s;
         }
-        .sm-panel-footer-dark  { border-top: 1px solid #E8EEF4; }
-        .sm-panel-footer-light { border-top: 1px solid rgba(255,255,255,0.06); }
-        .sm-footer-label {
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-        .sm-footer-label-dark  { color: #C2D0DC; }
-        .sm-footer-label-light { color: rgba(255,255,255,0.2); }
+        .sm-dock-bar:hover { background: rgba(255,255,255,0.03); }
 
-        /* ── Hover states ── */
-        .sm-root.view-pick .sm-panel-customer:hover { background: #F7FAFD; }
-        .sm-panel-customer { transition: flex 0.65s cubic-bezier(0.77, 0, 0.175, 1), background 0.2s; }
-        .sm-root.view-pick .sm-panel-employee:hover { background: #0E2540; }
-        .sm-panel-employee { transition: flex 0.65s cubic-bezier(0.77, 0, 0.175, 1), background 0.2s; }
+        .sm-dock-bar-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .sm-dock-pip {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #4A7FB5;
+          flex-shrink: 0;
+        }
+        .sm-dock-label {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.45);
+        }
+        .sm-dock-bar-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+        }
+        .sm-dock-chevron {
+          transition: transform 0.35s ease;
+          color: rgba(255,255,255,0.3);
+        }
+        .sm-dock.open .sm-dock-chevron { transform: rotate(180deg); }
+
+        .sm-dock-form {
+          padding: 0 40px 28px;
+        }
+        .sm-dock-form-inner {
+          display: flex;
+          gap: 12px;
+          align-items: flex-end;
+          flex-wrap: wrap;
+        }
+        .sm-dock-field {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          flex: 1;
+          min-width: 140px;
+        }
+        .sm-dock-label-field {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+        }
+        .sm-dock-input {
+          font-family: 'Barlow', sans-serif;
+          font-size: 13px;
+          font-weight: 400;
+          padding: 9px 12px;
+          background: rgba(255,255,255,0.05);
+          border: 1.5px solid rgba(255,255,255,0.1);
+          color: #FFFFFF;
+          outline: none;
+          transition: border-color 0.2s;
+          width: 100%;
+        }
+        .sm-dock-input::placeholder { color: rgba(255,255,255,0.2); }
+        .sm-dock-input:focus { border-color: rgba(255,255,255,0.35); }
+        .sm-dock-submit {
+          background: rgba(255,255,255,0.1);
+          border: 1.5px solid rgba(255,255,255,0.2);
+          color: #FFFFFF;
+          padding: 9px 22px;
+          font-family: 'Barlow', sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+          white-space: nowrap;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+        .sm-dock-submit:hover:not(:disabled) {
+          background: rgba(255,255,255,0.16);
+          border-color: rgba(255,255,255,0.4);
+        }
+        .sm-dock-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sm-dock-error {
+          width: 100%;
+          font-size: 11px;
+          color: #FCA5A5;
+          letter-spacing: 0.05em;
+          margin-top: 6px;
+          font-weight: 500;
+        }
+        .sm-dock-register {
+          width: 100%;
+          font-size: 11px;
+          color: rgba(255,255,255,0.25);
+          margin-top: 8px;
+          letter-spacing: 0.04em;
+        }
+        .sm-dock-register a {
+          color: rgba(255,255,255,0.45);
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .sm-dock-register a:hover { color: rgba(255,255,255,0.7); }
 
         /* ── Mobile ── */
-        @media (max-width: 640px) {
-          .sm-split { flex-direction: column; }
-          .sm-divider { width: 100%; height: 1px; }
-          .sm-root.view-customer .sm-panel-customer { flex: 1.5; }
-          .sm-root.view-customer .sm-panel-employee { flex: 0; }
-          .sm-root.view-salesperson .sm-panel-employee { flex: 1.5; }
-          .sm-root.view-salesperson .sm-panel-customer { flex: 0; }
-          .sm-panel-body { padding: 24px 32px 40px; }
-          .sm-panel-footer { padding: 14px 32px; }
-          .sm-topbar { padding: 0 24px; }
+        @media (max-width: 540px) {
+          .sm-brand { padding-top: 28px; padding-bottom: 18px; }
+          .sm-card { padding: 28px 24px 24px; }
+          .sm-dock-bar { padding: 0 20px; }
+          .sm-dock-form { padding: 0 20px 24px; }
+          .sm-dock-form-inner { flex-direction: column; }
+          .sm-dock-submit { width: 100%; justify-content: center; }
         }
       `}</style>
 
-      <div className={`sm-root view-${view}`}>
+      <div className="sm-root">
 
-        {/* ── Top bar ── */}
-        <div className="sm-topbar">
-          <div className="sm-topbar-brand">
-            <div className="sm-topbar-diamond" />
-            <span className="sm-topbar-name">Smith Motors</span>
-          </div>
-          <span className="sm-topbar-right">Customer &amp; Employee Access</span>
-        </div>
+        {/* ── Main customer area ── */}
+        <div className="sm-main">
 
-        {/* ── Split ── */}
-        <div className="sm-split">
+          {/* Car silhouette SVG */}
+          <svg
+            className="sm-car-bg"
+            viewBox="0 0 900 260"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            {/* Body */}
+            <path
+              d="M 75 215
+                 Q 72 202 80 194
+                 L 95 185
+                 L 155 174
+                 L 175 172
+                 L 245 172
+                 L 278 68
+                 Q 300 58 328 56
+                 L 572 56
+                 Q 600 58 622 68
+                 L 655 172
+                 L 725 172
+                 L 745 174
+                 L 805 185
+                 L 820 194
+                 Q 828 202 825 215
+                 Z"
+              fill="rgba(255,255,255,0.03)"
+              stroke="rgba(255,255,255,0.13)"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            {/* Roof highlight */}
+            <path
+              d="M 290 58 Q 450 52 610 58"
+              fill="none"
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+            />
+            {/* Front wheel */}
+            <circle cx="205" cy="220" r="46"
+              fill="rgba(255,255,255,0.025)"
+              stroke="rgba(255,255,255,0.11)"
+              strokeWidth="1.5"
+            />
+            <circle cx="205" cy="220" r="18"
+              fill="none"
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+            />
+            {/* Rear wheel */}
+            <circle cx="695" cy="220" r="46"
+              fill="rgba(255,255,255,0.025)"
+              stroke="rgba(255,255,255,0.11)"
+              strokeWidth="1.5"
+            />
+            <circle cx="695" cy="220" r="18"
+              fill="none"
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+            />
+            {/* Ground shadow */}
+            <ellipse cx="450" cy="258" rx="390" ry="8"
+              fill="rgba(0,0,0,0.25)"
+            />
+            <line x1="60" y1="253" x2="840" y2="253"
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="1"
+            />
+          </svg>
 
-          {/* ── LEFT — Customer ── */}
-          <div className="sm-panel sm-panel-customer">
-            <div className="sm-panel-inner">
-              <div className="sm-panel-body">
-                {view !== "customer" ? (
-                  <div className="sm-select" onClick={() => setView("customer")}>
-                    <div className="sm-role-tag sm-role-tag-customer">
-                      <span className="sm-role-dot sm-role-dot-customer" />
-                      Customer Portal
-                    </div>
-                    <h2 className="sm-select-heading sm-select-heading-dark">
-                      Shop<br />Vehicles
-                    </h2>
-                    <p className="sm-select-desc sm-select-desc-dark">
-                      Browse inventory, explore financing options, and chat with our AI assistant.
-                    </p>
-                    <button className="sm-btn-primary">
-                      Sign In
-                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                    <div className="sm-features">
-                      {["Browse new & used inventory", "AI-powered chat assistant", "Financing pre-qualification"].map((f) => (
-                        <div key={f} className="sm-feature-item sm-feature-item-dark">
-                          <span className="sm-feature-check">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                              <path d="M3 8l3.5 3.5L13 5" stroke="#1B6BCC" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </span>
-                          {f}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="sm-form-wrap">
-                    <button className="sm-back sm-back-dark" onClick={reset}>
-                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Back
-                    </button>
-                    <p className="sm-form-role sm-form-role-blue">Customer Portal</p>
-                    <h2 className="sm-form-title sm-form-title-dark">Sign In</h2>
-                    <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      <div className="sm-field">
-                        <label className="sm-field-label sm-field-label-dark">Email Address</label>
-                        <input className="sm-input-dark" type="email" value={email}
-                          onChange={(e) => setEmail(e.target.value)} required autoFocus
-                          placeholder="you@example.com" />
-                      </div>
-                      <div className="sm-field">
-                        <label className="sm-field-label sm-field-label-dark">Password</label>
-                        <input className="sm-input-dark" type="password" value={password}
-                          onChange={(e) => setPassword(e.target.value)} required
-                          placeholder="••••••••" />
-                      </div>
-                      {error && <p className="sm-error">{error}</p>}
-                      <button type="submit" disabled={loading} className="sm-submit-dark">
-                        {loading ? "Signing In..." : "Sign In"}
-                        {!loading && (
-                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        )}
-                      </button>
-                    </form>
-                    <p className="sm-register sm-register-dark">
-                      New customer?{" "}
-                      <Link href="/register">Create an account</Link>
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="sm-panel-footer sm-panel-footer-dark">
-                <span className="sm-footer-label sm-footer-label-dark">Customer Access</span>
-                <span className="sm-footer-label sm-footer-label-dark" style={{ letterSpacing: "0.06em" }}>
-                  Smith Motors
-                </span>
-              </div>
+          {/* Brand */}
+          <div className="sm-brand">
+            <div className="sm-brand-mark">
+              <div className="sm-brand-mark-outer" />
+              <div className="sm-brand-mark-inner" />
             </div>
+            <div className="sm-brand-name">Smith Motors</div>
+            <div className="sm-brand-sub">Authorized Dealer</div>
           </div>
 
-          {/* ── Divider ── */}
-          <div className="sm-divider" />
+          {/* Customer login card */}
+          <div className="sm-card-wrap">
+            <div className="sm-card">
+              <div className="sm-card-eyebrow">Customer Portal</div>
+              <h2 className="sm-card-title">Sign In</h2>
 
-          {/* ── RIGHT — Employee ── */}
-          <div className="sm-panel sm-panel-employee">
-            <div className="sm-panel-inner">
-              <div className="sm-panel-body">
-                {view !== "salesperson" ? (
-                  <div className="sm-select" onClick={() => setView("salesperson")}>
-                    <div className="sm-role-tag sm-role-tag-employee">
-                      <span className="sm-role-dot sm-role-dot-employee" />
-                      Employee Portal
-                    </div>
-                    <h2 className="sm-select-heading sm-select-heading-light">
-                      Staff<br />Dashboard
-                    </h2>
-                    <p className="sm-select-desc sm-select-desc-light">
-                      Manage leads, view customer assignments, and access dealership metrics.
-                    </p>
-                    <button className="sm-btn-outline">
-                      Sign In
-                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                    <div className="sm-features">
-                      {["Customer lead management", "Appointment scheduling", "Performance metrics"].map((f) => (
-                        <div key={f} className="sm-feature-item sm-feature-item-light">
-                          <span className="sm-feature-check">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                              <path d="M3 8l3.5 3.5L13 5" stroke="#7DB3EA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </span>
-                          {f}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="sm-form-wrap">
-                    <button className="sm-back sm-back-light" onClick={reset}>
-                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Back
-                    </button>
-                    <p className="sm-form-role sm-form-role-sky">Employee Portal</p>
-                    <h2 className="sm-form-title sm-form-title-light">Sign In</h2>
-                    <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      <div className="sm-field">
-                        <label className="sm-field-label sm-field-label-light">Email Address</label>
-                        <input className="sm-input-light" type="email" value={email}
-                          onChange={(e) => setEmail(e.target.value)} required autoFocus
-                          placeholder="you@smithmotors.com" />
-                      </div>
-                      <div className="sm-field">
-                        <label className="sm-field-label sm-field-label-light">Password</label>
-                        <input className="sm-input-light" type="password" value={password}
-                          onChange={(e) => setPassword(e.target.value)} required
-                          placeholder="••••••••" />
-                      </div>
-                      {error && <p className="sm-error sm-error-light">{error}</p>}
-                      <button type="submit" disabled={loading} className="sm-submit-light">
-                        {loading ? "Signing In..." : "Sign In"}
-                        {!loading && (
-                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        )}
-                      </button>
-                    </form>
-                    <p className="sm-register sm-register-light">
-                      New team member?{" "}
-                      <Link href="/register">Create an account</Link>
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="sm-panel-footer sm-panel-footer-light">
-                <span className="sm-footer-label sm-footer-label-light">Employee Access</span>
-                <span className="sm-footer-label sm-footer-label-light" style={{ letterSpacing: "0.06em" }}>
-                  Smith Motors
-                </span>
-              </div>
+              <form onSubmit={handleCustomerSignIn}>
+                <div className="sm-field">
+                  <label className="sm-label">Email Address</label>
+                  <input
+                    className="sm-input"
+                    type="email"
+                    value={custEmail}
+                    onChange={(e) => setCustEmail(e.target.value)}
+                    required
+                    autoFocus
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="sm-field">
+                  <label className="sm-label">Password</label>
+                  <input
+                    className="sm-input"
+                    type="password"
+                    value={custPassword}
+                    onChange={(e) => setCustPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {custError && <div className="sm-error-box">{custError}</div>}
+
+                <button type="submit" disabled={loading === "customer"} className="sm-submit">
+                  {loading === "customer" ? "Signing In..." : "Sign In"}
+                  {loading !== "customer" && (
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              </form>
+
+              <p className="sm-register">
+                New customer?{" "}
+                <Link href="/register">Create an account</Link>
+              </p>
             </div>
           </div>
 
         </div>
+
+        {/* ── Employee dock ── */}
+        <div className={`sm-dock${empOpen ? " open" : ""}`}>
+
+          {/* Bar — always visible */}
+          <div className="sm-dock-bar" onClick={() => setEmpOpen((v) => !v)}>
+            <div className="sm-dock-bar-left">
+              <div className="sm-dock-pip" />
+              <span className="sm-dock-label">Employee Portal</span>
+            </div>
+            <div className="sm-dock-bar-right">
+              <span>{empOpen ? "Close" : "Staff Sign In"}</span>
+              <svg
+                className="sm-dock-chevron"
+                width="14" height="14"
+                fill="none" stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Expanded form */}
+          <div className="sm-dock-form">
+            <form onSubmit={handleEmployeeSignIn}>
+              <div className="sm-dock-form-inner">
+                <div className="sm-dock-field">
+                  <label className="sm-dock-label-field">Email</label>
+                  <input
+                    className="sm-dock-input"
+                    type="email"
+                    value={empEmail}
+                    onChange={(e) => setEmpEmail(e.target.value)}
+                    required
+                    placeholder="you@smithmotors.com"
+                  />
+                </div>
+                <div className="sm-dock-field">
+                  <label className="sm-dock-label-field">Password</label>
+                  <input
+                    className="sm-dock-input"
+                    type="password"
+                    value={empPassword}
+                    onChange={(e) => setEmpPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button type="submit" disabled={loading === "employee"} className="sm-dock-submit">
+                  {loading === "employee" ? "..." : "Sign In"}
+                  {loading !== "employee" && (
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+                {empError && <p className="sm-dock-error">{empError}</p>}
+                <p className="sm-dock-register">
+                  New team member?{" "}
+                  <Link href="/register">Create an account</Link>
+                </p>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
       </div>
     </>
   );
