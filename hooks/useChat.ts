@@ -25,15 +25,17 @@ export function useChat(initialSessionId?: string) {
       setMessages((prev) => [...prev, userMsg]);
       setIsLoading(true);
 
-      // Optimistic assistant placeholder
+      // Only add assistant placeholder when AI will respond (not after handoff)
       const assistantId = `assistant-${Date.now()}`;
-      const assistantMsg: ChatMessage = {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      if (!isHandedOff) {
+        const assistantMsg: ChatMessage = {
+          id: assistantId,
+          role: "assistant",
+          content: "",
+          createdAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+      }
 
       abortRef.current = new AbortController();
 
@@ -76,6 +78,8 @@ export function useChat(initialSessionId?: string) {
                   chunk.content ||
                     "You're being connected with a sales specialist who will be in touch shortly."
                 );
+              } else if (chunk.type === "message_received") {
+                // Message stored for salesperson — nothing to render
               }
             } catch {
               // Ignore parse errors from partial chunks

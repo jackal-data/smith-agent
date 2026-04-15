@@ -7,7 +7,6 @@
  * with correct intentDelta values computed from the real intent-detector logic.
  *
  * Usage:
- *   DATABASE_URL="file:./dev.db" ANTHROPIC_API_KEY="sk-ant-..." \
  *   npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/generate-conversations.ts
  *
  * Options (env vars):
@@ -15,8 +14,8 @@
  *   DRY_RUN=true     Print conversations to stdout without writing to DB
  */
 
-import path from "path";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
+import * as path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -65,12 +64,12 @@ function computeSessionIntent(deltas: number[]): number {
 
 const HANDOFF_THRESHOLD = 0.72;
 
-// ─── Persona definitions ──────────────────────────────────────────
+// ─── Scenario definitions ──────────────────────────────────────────
 
 interface Scenario {
   label: string;
   targetOutcome: "ACTIVE" | "HANDED_OFF" | "CLOSED";
-  systemHint: string;
+  systemHint: string; // guidance injected into the generation prompt
 }
 
 const SCENARIOS: Scenario[] = [
@@ -99,34 +98,34 @@ const SCENARIOS: Scenario[] = [
       "A contractor who needs a truck with a heavy-duty tow package. Very specific about payload capacity and bed size. Asks about availability and wants to come in this weekend. 8–12 turns.",
   },
   {
-    label: "luxury_price_negotiator",
+    label: "first_time_buyer",
     targetOutcome: "HANDED_OFF",
     systemHint:
-      "Interested in a BMW or Porsche. Asks about markup over MSRP, dealer fees, and wants to negotiate. Ultimately asks to speak with a salesperson about price. 10–12 turns.",
+      "A 23-year-old buying their first car. Nervous about financing and budget. Asks lots of basic questions. Eventually gets comfortable and wants to schedule a visit. 12–16 turns.",
   },
   {
-    label: "budget_first_time_buyer",
+    label: "luxury_upgrade",
+    targetOutcome: "HANDED_OFF",
+    systemHint:
+      "An executive trading in a 3-year-old BMW for a newer model. Very specific about features (massage seats, night vision). Asks about trade-in value. 8–10 turns.",
+  },
+  {
+    label: "budget_browser",
     targetOutcome: "ACTIVE",
     systemHint:
-      "A college graduate buying their first car on a tight budget (under $28k). Asks about monthly payments, insurance impact, and warranty. Cautious, not ready to commit yet. 6–8 turns.",
+      "Someone on a tight budget browsing under $20k. Asks about reliability and fuel economy. Isn't ready to commit. 6–8 turns.",
   },
   {
-    label: "trade_in_negotiator",
+    label: "fleet_purchase",
     targetOutcome: "HANDED_OFF",
     systemHint:
-      "Customer has a 2020 Honda Civic with 45,000 miles to trade in. Wants to know trade-in value before deciding. Shows high intent once the trade-in is addressed. Asks to book an appointment. 10–12 turns.",
+      "A small business owner looking to buy 3 trucks for their landscaping crew. Asks about fleet pricing, fleet maintenance, and corporate financing. Wants to speak with a fleet manager. 8–12 turns.",
   },
   {
-    label: "sport_car_enthusiast",
+    label: "trade_in_focused",
     targetOutcome: "HANDED_OFF",
     systemHint:
-      "A driving enthusiast who wants a manual transmission sport car. Asks about the Subaru WRX or Ford Mustang. Very engaged, mentions a specific car they saw on the lot. Books a test drive. 8–10 turns.",
-  },
-  {
-    label: "cold_browser",
-    targetOutcome: "ACTIVE",
-    systemHint:
-      "Just browsing, no real intent to buy soon. Asks vague questions about inventory, doesn't engage deeply, and ends the conversation politely. 4–6 turns. Low intent score.",
+      "Customer is primarily focused on getting the best trade-in value for their current vehicle. Asks multiple questions about valuation process, then decides to come in. 8–10 turns.",
   },
   {
     label: "financing_deep_dive",
@@ -136,7 +135,7 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-// ─── Generation prompt ────────────────────────────────────────────
+// ─── Vehicle row type ─────────────────────────────────────────────
 
 interface VehicleRow {
   id: string;
@@ -150,6 +149,8 @@ interface VehicleRow {
   features: string;
   daysOnLot: number;
 }
+
+// ─── Generation prompt ────────────────────────────────────────────
 
 function buildGenerationPrompt(scenario: Scenario, vehicle: VehicleRow): string {
   return `You are generating a realistic synthetic customer service conversation for a car dealership AI system called Smith Motors.
@@ -225,6 +226,7 @@ function parseConversation(raw: string): Turn[] {
     } else if (trimmed.startsWith("AGENT:")) {
       turns.push({ role: "ASSISTANT", content: trimmed.slice("AGENT:".length).trim() });
     }
+    // ignore blank lines / commentary
   }
   return turns.filter((t) => t.content.length > 0);
 }
@@ -247,6 +249,8 @@ function detectHandoff(turns: Turn[]): boolean {
     (t) => t.role === "USER" && HANDOFF_PHRASES.some((p) => p.test(t.content)),
   );
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────
 
 function extractUrgencySignals(turns: Turn[]): string[] {
   const signals: string[] = [];

@@ -2,11 +2,14 @@
 
 import { cn } from "@/components/ui/cn";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 interface CustomerCardProps {
   assignmentId: string;
   customerId: string;
+  sessionId: string;
   customerName?: string;
   customerEmail: string;
   intentScore: number;
@@ -17,11 +20,11 @@ interface CustomerCardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
+  PENDING:      "bg-yellow-100 text-yellow-800",
   ACKNOWLEDGED: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-green-100 text-green-800",
-  CLOSED_WON: "bg-gray-100 text-gray-600",
-  CLOSED_LOST: "bg-red-100 text-red-700",
+  IN_PROGRESS:  "bg-green-100 text-green-800",
+  CLOSED_WON:   "bg-gray-100 text-gray-600",
+  CLOSED_LOST:  "bg-red-100 text-red-700",
 };
 
 function IntentBar({ score }: { score: number }) {
@@ -39,6 +42,7 @@ function IntentBar({ score }: { score: number }) {
 
 export function CustomerCard({
   customerId,
+  sessionId,
   customerName,
   customerEmail,
   intentScore,
@@ -47,6 +51,25 @@ export function CustomerCard({
   summary,
   recommendedMarkup,
 }: CustomerCardProps) {
+  const router = useRouter();
+  const [joining, setJoining] = useState(false);
+
+  const handleJoin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setJoining(true);
+    try {
+      await fetch("/api/salesperson/live-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, customerId, action: "join" }),
+      });
+    } finally {
+      setJoining(false);
+      router.push(`/salesperson/customers/${customerId}`);
+    }
+  };
+
   return (
     <Link href={`/salesperson/customers/${customerId}`}>
       <div className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
@@ -55,7 +78,7 @@ export function CustomerCard({
             <p className="font-semibold text-sm text-gray-900">
               {customerName || customerEmail}
             </p>
-            <p className="text-xs text-gray-700">{customerEmail}</p>
+            <p className="text-xs text-gray-500">{customerEmail}</p>
           </div>
           <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[assignmentStatus])}>
             {assignmentStatus.replace(/_/g, " ")}
@@ -63,23 +86,35 @@ export function CustomerCard({
         </div>
 
         <div className="mb-3">
-          <p className="text-xs text-gray-600 mb-1">Buying intent</p>
+          <p className="text-xs text-gray-500 mb-1">Buying intent</p>
           <IntentBar score={intentScore} />
         </div>
 
         {recommendedMarkup !== undefined && (
-          <div className="mb-3 bg-blue-50 rounded-lg px-3 py-1.5 flex items-center gap-2">
+          <div className="mb-3 bg-blue-50 rounded-lg px-3 py-1.5">
             <span className="text-blue-700 text-xs font-medium">
               AI suggests: Open at +{recommendedMarkup}% over MSRP
             </span>
           </div>
         )}
 
-        <p className="text-xs text-gray-600 line-clamp-2 mb-2">{summary}</p>
+        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{summary}</p>
 
-        <p className="text-xs text-gray-600">
-          Last activity {formatDistanceToNow(new Date(lastActivity), { addSuffix: true })}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">
+            Last activity {formatDistanceToNow(new Date(lastActivity), { addSuffix: true })}
+          </p>
+
+          {assignmentStatus === "PENDING" && (
+            <button
+              onClick={handleJoin}
+              disabled={joining}
+              className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+            >
+              {joining ? "Joining..." : "Join Chat"}
+            </button>
+          )}
+        </div>
       </div>
     </Link>
   );

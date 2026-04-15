@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { PriceRecommendationWidget } from "@/components/salesperson/PriceRecommendationWidget";
+import { LiveChatPanel } from "@/components/salesperson/LiveChatPanel";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
@@ -105,6 +106,15 @@ export default async function CustomerDetailPage({
                         {vm.vehicle.year} {vm.vehicle.make} {vm.vehicle.model} {vm.vehicle.trim}
                       </p>
                       <p className="text-xs text-gray-700">VIN: {vm.vehicle.vin}</p>
+                      {vm.vehicle.daysOnLot >= 60 ? (
+                        <span className="inline-flex items-center gap-1 mt-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                          🔴 {vm.vehicle.daysOnLot} days on lot — push for special
+                        </span>
+                      ) : vm.vehicle.daysOnLot >= 30 ? (
+                        <span className="inline-flex items-center gap-1 mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                          🟠 {vm.vehicle.daysOnLot} days on lot
+                        </span>
+                      ) : null}
                     </div>
                     <p className="text-sm font-semibold text-gray-900">
                       ${vm.vehicle.msrp.toLocaleString()}
@@ -141,8 +151,16 @@ export default async function CustomerDetailPage({
           </div>
         </div>
 
-        {/* Right: Pricing widget + actions */}
+        {/* Right: Live chat + pricing + actions */}
         <div className="space-y-4">
+          <LiveChatPanel
+            sessionId={assignment.session.id}
+            customerId={assignment.customer.id}
+            customerName={assignment.customer.name}
+            assignmentStatus={assignment.status}
+            salespersonName={session.user.name ?? "Sales Advisor"}
+          />
+
           <PriceRecommendationWidget sessionId={assignment.session.id} />
 
           {/* Status update */}

@@ -3,6 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { CustomerCard } from "@/components/salesperson/CustomerCard";
+import { WeekStrip } from "@/components/salesperson/WeekStrip";
+import { SettingsDropdown } from "@/components/salesperson/SettingsDropdown";
 import Link from "next/link";
 
 export default async function SalespersonDashboard() {
@@ -35,19 +37,34 @@ export default async function SalespersonDashboard() {
     orderBy: { intentScore: "desc" },
   });
 
-  const upcomingAppointments = await prisma.appointment.findMany({
+  const weekEnd = new Date();
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const weekAppointments = await prisma.appointment.findMany({
     where: {
       customer: { managedBy: { some: { salespersonId: session.user.id } } },
-      scheduledAt: { gte: new Date() },
-      status: { in: ["SCHEDULED", "CONFIRMED"] },
+      scheduledAt: { gte: new Date(), lte: weekEnd },
     },
     include: {
       customer: { select: { name: true, email: true } },
-      vehicle: { select: { make: true, model: true, year: true } },
+      vehicle: { select: { make: true, model: true, year: true, daysOnLot: true } },
     },
     orderBy: { scheduledAt: "asc" },
-    take: 5,
   });
+
+  // Serialize for client components (Dates → ISO strings)
+  const serializedAppointments = weekAppointments.map((a) => ({
+    id: a.id,
+    customerName: a.customer.name,
+    customerEmail: a.customer.email,
+    vehicleLabel: a.vehicle
+      ? `${a.vehicle.year} ${a.vehicle.make} ${a.vehicle.model}`
+      : null,
+    type: a.type,
+    scheduledAt: a.scheduledAt.toISOString(),
+    status: a.status,
+    notes: a.notes,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -62,11 +79,15 @@ export default async function SalespersonDashboard() {
             <p className="text-xs text-gray-700">Sales Dashboard</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link href="/salesperson/appointments" className="text-sm text-blue-600 hover:underline">
             Appointments
           </Link>
-          <span className="text-sm text-gray-700">{session.user.name || session.user.email}</span>
+          <SettingsDropdown
+            name={session.user.name ?? null}
+            email={session.user.email!}
+            role={session.user.role}
+          />
         </div>
       </header>
 
@@ -78,8 +99,8 @@ export default async function SalespersonDashboard() {
             <p className="text-xs text-gray-700 mt-0.5">Active Customers</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{upcomingAppointments.length}</p>
-            <p className="text-xs text-gray-700 mt-0.5">Upcoming Appts</p>
+            <p className="text-2xl font-bold text-gray-900">{weekAppointments.length}</p>
+            <p className="text-xs text-gray-700 mt-0.5">This Week</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">
@@ -110,6 +131,7 @@ export default async function SalespersonDashboard() {
                     key={a.id}
                     assignmentId={a.id}
                     customerId={a.customer.id}
+                    sessionId={a.session.id}
                     customerName={a.customer.name ?? undefined}
                     customerEmail={a.customer.email}
                     intentScore={a.session.intentScore}
@@ -123,50 +145,15 @@ export default async function SalespersonDashboard() {
             )}
           </div>
 
-          {/* Upcoming appointments */}
+          {/* This week strip */}
           <div>
-            <h2 className="font-semibold text-gray-900 mb-3">Upcoming Appointments</h2>
-            {upcomingAppointments.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-5 text-center text-gray-700 text-sm">
-                No upcoming appointments
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {upcomingAppointments.map((appt) => (
-                  <div key={appt.id} className="bg-white border border-gray-200 rounded-xl p-3">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {appt.customer.name || appt.customer.email}
-                      </p>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                        {appt.type.replace(/_/g, " ")}
-                      </span>
-                    </div>
-                    {appt.vehicle && (
-                      <p className="text-xs text-gray-700 mb-1">
-                        {appt.vehicle.year} {appt.vehicle.make} {appt.vehicle.model}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-600">
-                      {new Date(appt.scheduledAt).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <Link
-              href="/salesperson/appointments"
-              className="block mt-3 text-center text-xs text-blue-600 hover:underline"
-            >
-              Manage all appointments →
-            </Link>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-gray-900">This Week</h2>
+              <Link href="/salesperson/appointments" className="text-xs text-blue-600 hover:underline">
+                All appointments →
+              </Link>
+            </div>
+            <WeekStrip appointments={serializedAppointments} />
           </div>
         </div>
       </div>
