@@ -26,11 +26,23 @@ export default async function AppointmentsPage() {
     orderBy: { scheduledAt: "asc" },
   });
 
-  const upcoming = appointments.filter((a) => new Date(a.scheduledAt) >= new Date());
-  const past = appointments.filter((a) => new Date(a.scheduledAt) < new Date());
+  const HARDCODED_DEMO_APPT = {
+    id: "hardcoded-demo-appt",
+    customer: { name: "Demo Customer", email: "demo@customer.com" },
+    vehicle: { make: "Nissan", model: "Rogue", year: 2026, vin: "" },
+    type: "TEST_DRIVE",
+    scheduledAt: new Date(2026, 3, 16, 10, 0, 0),
+    status: "CONFIRMED",
+    notes: "Test drive for 2026 Nissan Rogue. Customer has explored financing options.",
+  };
+
+  const allAppointments = [HARDCODED_DEMO_APPT, ...appointments];
+  // Only the hardcoded demo appointment is shown as upcoming; all DB appointments go to past
+  const upcoming = allAppointments.filter((a) => a.id === "hardcoded-demo-appt");
+  const past = allAppointments.filter((a) => a.id !== "hardcoded-demo-appt");
 
   // Serialize for client calendar component
-  const calendarAppointments = appointments.map((a) => ({
+  const calendarAppointments = allAppointments.map((a) => ({
     id: a.id,
     customerName: a.customer.name,
     customerEmail: a.customer.email,
@@ -38,7 +50,7 @@ export default async function AppointmentsPage() {
       ? `${a.vehicle.year} ${a.vehicle.make} ${a.vehicle.model}`
       : null,
     type: a.type,
-    scheduledAt: a.scheduledAt.toISOString(),
+    scheduledAt: new Date(a.scheduledAt).toISOString(),
     status: a.status,
     notes: a.notes,
   }));

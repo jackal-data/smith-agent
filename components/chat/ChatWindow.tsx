@@ -77,7 +77,7 @@ export function ChatWindow() {
                   />
                 </svg>
                 <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-5 z-50 w-64 rounded bg-slate-800 px-3 py-2 text-xs text-slate-100 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                  Alex draws on your dealership&apos;s live inventory, financing rate tables, and the full context of your conversation to answer questions and make recommendations — no outside data is used.
+                  Alex draws on your dealership&apos;s live inventory, financing rate tables, and the full context of your conversation to answer questions and make recommendations — no outside data / bias is factored into recommendations.
                 </span>
               </span>
             )}

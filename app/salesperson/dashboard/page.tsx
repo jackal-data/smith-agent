@@ -55,18 +55,31 @@ export default async function SalespersonDashboard() {
   });
 
   // Serialize for client components (Dates → ISO strings)
-  const serializedAppointments = weekAppointments.map((a) => ({
-    id: a.id,
-    customerName: a.customer.name,
-    customerEmail: a.customer.email,
-    vehicleLabel: a.vehicle
-      ? `${a.vehicle.year} ${a.vehicle.make} ${a.vehicle.model}`
-      : null,
-    type: a.type,
-    scheduledAt: a.scheduledAt.toISOString(),
-    status: a.status,
-    notes: a.notes,
-  }));
+  const serializedAppointments = [
+    // Hardcoded Demo Customer appointment
+    {
+      id: "hardcoded-demo-appt",
+      customerName: "Demo Customer",
+      customerEmail: "demo@customer.com",
+      vehicleLabel: "2026 Nissan Rogue",
+      type: "TEST_DRIVE",
+      scheduledAt: new Date(2026, 3, 16, 10, 0, 0).toISOString(),
+      status: "CONFIRMED",
+      notes: "Test drive for 2026 Nissan Rogue. Customer has explored financing options.",
+    },
+    ...weekAppointments.map((a) => ({
+      id: a.id,
+      customerName: a.customer.name,
+      customerEmail: a.customer.email,
+      vehicleLabel: a.vehicle
+        ? `${a.vehicle.year} ${a.vehicle.make} ${a.vehicle.model}`
+        : null,
+      type: a.type,
+      scheduledAt: a.scheduledAt.toISOString(),
+      status: a.status,
+      notes: a.notes,
+    })),
+  ];
 
   return (
     <div className="min-h-screen bg-[#F0F4FB]">
@@ -127,30 +140,37 @@ export default async function SalespersonDashboard() {
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.1em]">Your Customers</h2>
               <span className="text-xs text-slate-400">{assignments.length} active</span>
             </div>
-            {assignments.length === 0 ? (
-              <div className="bg-white border border-slate-200 rounded-md p-10 text-center">
-                <p className="text-sm text-slate-500">No active customers yet.</p>
-                <p className="text-xs text-slate-400 mt-1">New customers will appear here after handoff.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {assignments.map((a) => (
-                  <CustomerCard
-                    key={a.id}
-                    assignmentId={a.id}
-                    customerId={a.customer.id}
-                    sessionId={a.session.id}
-                    customerName={a.customer.name ?? undefined}
-                    customerEmail={a.customer.email}
-                    intentScore={a.session.intentScore}
-                    assignmentStatus={a.status}
-                    lastActivity={(a.session.messages[0]?.createdAt ?? a.session.createdAt).toISOString()}
-                    summary={a.summary}
-                    recommendedMarkup={a.recommendedMarkup ?? undefined}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="space-y-2">
+              {/* Hardcoded Demo Customer entry */}
+              <CustomerCard
+                key="hardcoded-demo"
+                assignmentId="hardcoded-demo"
+                customerId="hardcoded-demo-customer"
+                sessionId="hardcoded-demo-session"
+                customerName="Demo Customer"
+                customerEmail="demo@customer.com"
+                intentScore={0.87}
+                assignmentStatus="IN_PROGRESS"
+                lastActivity={new Date(Date.now() - 1000 * 60 * 18).toISOString()}
+                summary="Customer is interested in a 2026 Nissan Rogue. Test drive scheduled for Thursday, April 16 at 10:00 AM. Has explored financing options and appears highly motivated to buy. Recommended next step: confirm test drive and prepare a financing quote."
+                recommendedMarkup={3.5}
+              />
+              {assignments.map((a) => (
+                <CustomerCard
+                  key={a.id}
+                  assignmentId={a.id}
+                  customerId={a.customer.id}
+                  sessionId={a.session.id}
+                  customerName={a.customer.name ?? undefined}
+                  customerEmail={a.customer.email}
+                  intentScore={a.session.intentScore}
+                  assignmentStatus={a.status}
+                  lastActivity={(a.session.messages[0]?.createdAt ?? a.session.createdAt).toISOString()}
+                  summary={a.summary}
+                  recommendedMarkup={a.recommendedMarkup ?? undefined}
+                />
+              ))}
+            </div>
           </div>
 
           {/* This week strip */}
