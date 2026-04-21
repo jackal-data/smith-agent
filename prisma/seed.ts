@@ -11,6 +11,49 @@ const prisma = new PrismaClient();
 // ─── Deterministic seed so results are reproducible ──────────────
 faker.seed(42);
 
+// ─── Image mapping ────────────────────────────────────────────────
+
+const ALL_IMAGES = [
+  "/images/vehicles/crv.jpg",
+  "/images/vehicles/crv2.jpg",
+  "/images/vehicles/accord.jpg",
+  "/images/vehicles/civic.jpg",
+  "/images/vehicles/maverick.jpg",
+  "/images/vehicles/model3.jpg",
+  "/images/vehicles/altima.webp",
+  "/images/vehicles/rouge.jpg",
+  "/images/vehicles/frontier.jpg",
+  "/images/vehicles/4runner.jpg",
+  "/images/vehicles/elantra.webp",
+  "/images/vehicles/tuscon.jpg",
+  "/images/vehicles/equinox.jpg",
+  "/images/vehicles/outback.webp",
+];
+
+const NATURAL_MAP: Record<string, string[]> = {
+  "honda_cr-v":        ["/images/vehicles/crv.jpg", "/images/vehicles/crv2.jpg"],
+  "honda_accord":      ["/images/vehicles/accord.jpg"],
+  "honda_civic":       ["/images/vehicles/civic.jpg"],
+  "ford_maverick":     ["/images/vehicles/maverick.jpg"],
+  "tesla_model 3":     ["/images/vehicles/model3.jpg"],
+  "nissan_altima":     ["/images/vehicles/altima.webp"],
+  "nissan_rogue":      ["/images/vehicles/rouge.jpg"],
+  "nissan_frontier":   ["/images/vehicles/frontier.jpg"],
+  "toyota_4runner":    ["/images/vehicles/4runner.jpg"],
+  "hyundai_elantra":   ["/images/vehicles/elantra.webp"],
+  "hyundai_tucson":    ["/images/vehicles/tuscon.jpg"],
+  "chevrolet_equinox": ["/images/vehicles/equinox.jpg"],
+  "subaru_outback":    ["/images/vehicles/outback.webp"],
+};
+
+function getVehicleImages(make: string, model: string): string[] {
+  const key = `${make.toLowerCase()}_${model.toLowerCase()}`;
+  if (NATURAL_MAP[key]) return NATURAL_MAP[key];
+  // deterministic fallback based on key string so same vehicle always gets same image
+  const idx = key.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % ALL_IMAGES.length;
+  return [ALL_IMAGES[idx]];
+}
+
 // ─── Vehicle catalogue ────────────────────────────────────────────
 
 const VEHICLE_CATALOGUE = [
@@ -141,7 +184,7 @@ async function main() {
         mileage,
         daysOnLot,
         features:  JSON.stringify(spec.features),
-        imageUrls: JSON.stringify([]),
+        imageUrls: JSON.stringify(getVehicleImages(spec.make, spec.model)),
         status:    "AVAILABLE",
       },
     });
@@ -165,7 +208,7 @@ async function main() {
     const created = await prisma.vehicle.upsert({
       where:  { vin: v.vin },
       update: {},
-      create: { ...v, features: JSON.stringify(v.features), imageUrls: JSON.stringify([]), status: "AVAILABLE" },
+      create: { ...v, features: JSON.stringify(v.features), imageUrls: JSON.stringify(getVehicleImages(v.make, v.model)), status: "AVAILABLE" },
     });
     if (!vehicleIds.includes(created.id)) vehicleIds.push(created.id);
   }
